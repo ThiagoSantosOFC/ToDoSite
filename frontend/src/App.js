@@ -2,73 +2,64 @@ import React, { Component } from "react";
 import Modal from "./components/Modal";
 import axios from "axios";
 
-
-const todoItems = [
-  {
-    id: 1,
-    title: "ir ao mercado",
-    description: "comprar comida para o almoço",
-    completed: true,
-  },
-  {
-    id: 2,
-    title: "Estudar React",
-    description: "ler toda a documentação",
-    completed: false,
-  },
-  {
-    id: 3,
-    title: "salvar o mundo",
-    description: "Salve o mundo!",
-    completed: true,
-  },
-  {
-    id: 4,
-    title: "Artigo",
-    description: "Escreva um artigo ensinado a usar React com Django",
-    completed: false,
-  },
-];
-
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       viewCompleted: false,
-      todoList:[],
-      Modal: false,
+      todoList: [],
+      modal: false,
       activeItem: {
         title: "",
         description: "",
         completed: false,
       },
-      
     };
   }
 
+  componentDidMount() {
+    this.refreshList();
+  }
+
+  refreshList = () => {
+    axios
+      .get("/api/todos/")
+      .then((res) => this.setState({ todoList: res.data }))
+      .catch((err) => console.log(err));
+  };
+
   toggle = () => {
-    this.setState({Modal: !this.state.Modal});
+    this.setState({ modal: !this.state.modal });
   };
 
   handleSubmit = (item) => {
     this.toggle();
 
-    alert("save"+ JSON.stringify(item));
+    if (item.id) {
+      axios
+        .put(`/api/todos/${item.id}/`, item)
+        .then((res) => this.refreshList());
+      return;
+    }
+    axios
+      .post("/api/todos/", item)
+      .then((res) => this.refreshList());
   };
 
   handleDelete = (item) => {
-    alert("delete" + JSON.stringify(item));
+    axios
+      .delete(`/api/todos/${item.id}/`)
+      .then((res) => this.refreshList());
   };
 
   createItem = () => {
-    const item = {title : "", description: "", completed: false};
-    this.setState({activeItem: item, modal: !this.state.modal});
+    const item = { title: "", description: "", completed: false };
 
-    editItem = (item) => {
-      this.setState({activeItem: item, modal: !this.state.modal});
-    }
+    this.setState({ activeItem: item, modal: !this.state.modal });
+  };
 
-
+  editItem = (item) => {
+    this.setState({ activeItem: item, modal: !this.state.modal });
   };
 
   displayCompleted = (status) => {
@@ -79,20 +70,18 @@ class App extends Component {
     return this.setState({ viewCompleted: false });
   };
 
-
-
   renderTabList = () => {
     return (
       <div className="nav nav-tabs">
         <span
-          className={this.state.viewCompleted ? "nav-link active" : "nav-link"}
           onClick={() => this.displayCompleted(true)}
+          className={this.state.viewCompleted ? "nav-link active" : "nav-link"}
         >
           Complete
         </span>
         <span
-          className={this.state.viewCompleted ? "nav-link" : "nav-link active"}
           onClick={() => this.displayCompleted(false)}
+          className={this.state.viewCompleted ? "nav-link" : "nav-link active"}
         >
           Incomplete
         </span>
